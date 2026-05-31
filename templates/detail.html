@@ -4,18 +4,14 @@
 {% block content %}
 <!-- HERO -->
 <div class="detail-hero">
+  {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿','Snow':'❄️'} %}
+  {% set first_tag = dest.tags.split(',')[0].strip() %}
   <img src="{{ dest.image_url }}"
-     alt="{{ dest.place_name }}"
-     style="
-       position:absolute;
-       inset:0;
-       width:100%;
-       height:100%;
-       object-fit:cover;
-     ">
-  <div class="card-img-placeholder" style="position:absolute;inset:0;width:100%;height:100%;font-size:8rem;display:flex;align-items:center;justify-content:center;opacity:0.3;">
-    {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿','Snow':'❄️'} %}
-    {{ icons.get(dest.tags.split(',')[0].strip(), '📍') }}
+       alt="{{ dest.place_name }}"
+       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.55;"
+       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+  <div style="position:absolute;inset:0;width:100%;height:100%;font-size:8rem;display:none;align-items:center;justify-content:center;opacity:0.3;">
+    {{ icons.get(first_tag, '📍') }}
   </div>
   <div class="detail-hero-content">
     <div class="state">📍 {{ dest.state }} · {{ dest.region }} India</div>
@@ -39,9 +35,9 @@
               id="wishlistBtn" onclick="toggleWishlist({{ dest.id }}, this)">
         {% if dest.id in wishlist_ids %}❤️ Saved{% else %}🤍 Save to Wishlist{% endif %}
       </button>
-      <button class="btn btn-ghost btn-sm" onclick="addToCompare({{ dest.id }}, this)" style="border-color:rgba(255,255,255,0.4); color:black;">⚖️ Add to Compare</button>
+      <button class="btn btn-ghost btn-sm" onclick="addToCompare({{ dest.id }}, this)" style="border-color:rgba(255,255,255,0.4); color:white;">⚖️ Add to Compare</button>
       {% if dest.google_maps_url and dest.google_maps_url != '#' %}
-      <a href="{{ dest.google_maps_url }}" target="_blank" class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,0.4); color:black;">🗺 View on Maps</a>
+      <a href="{{ dest.google_maps_url }}" target="_blank" class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,0.4); color:white;">🗺 View on Maps</a>
       {% endif %}
     </div>
   </div>
@@ -211,15 +207,6 @@
       {% for s in similar %}
       <div class="dest-card">
         <div class="card-img">
-          <img src="{{ dest.image_url }}"
-     alt="{{ dest.place_name }}"
-     style="
-       position:absolute;
-       inset:0;
-       width:100%;
-       height:100%;
-       object-fit:cover;
-     ">
           <div class="card-img-placeholder">📍</div>
         </div>
         <div class="card-body">

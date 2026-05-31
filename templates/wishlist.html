@@ -17,13 +17,12 @@
     {% for dest in items %}
     <div class="dest-card fade-in" id="wish-{{ dest.id }}">
       <div class="card-img">
+        {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿'} %}
+        {% set first_tag = dest.tags.split(',')[0].strip() %}
         <img src="{{ dest.image_url }}"
-     alt="{{ dest.place_name }}"
-     class="card-image">
-        <div class="card-img-placeholder">
-          {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿'} %}
-          {{ icons.get(dest.tags.split(',')[0].strip(), '📍') }}
-        </div>
+             alt="{{ dest.place_name }}"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="card-img-placeholder" style="display:none;">{{ icons.get(first_tag, '📍') }}</div>
         <button class="card-heart active" onclick="removeWishlistItem({{ dest.id }}, this)" title="Remove">❤️</button>
       </div>
       {% if dest.badges %}

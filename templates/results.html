@@ -58,14 +58,12 @@
     {% for dest in results %}
     <div class="dest-card fade-in" style="animation-delay: {{ loop.index0 * 0.05 }}s">
       <div class="card-img">
+        {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿','Snow':'❄️','Mountains':'🏔','Tea Gardens':'☕','Backwaters':'🚣','Lakes':'🏞','Waterfalls':'🌊','Coffee':'☕','Tribal Culture':'🎭','Buddhist':'🧘','French Culture':'🥐'} %}
+        {% set first_tag = dest.tags.split(',')[0].strip() %}
         <img src="{{ dest.image_url }}"
-       alt="{{ dest.place_name }}"
-       class="card-image">
-        <div class="card-img-placeholder">
-          {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿','Snow':'❄️','Mountains':'🏔','Tea Gardens':'☕','Backwaters':'🚣','Lakes':'🏞','Waterfalls':'🌊','Coffee':'☕','Tribal Culture':'🎭','Buddhist':'🧘','French Culture':'🥐'} %}
-          {% set first_tag = dest.tags.split(',')[0].strip() %}
-          {{ icons.get(first_tag, '📍') }}
-        </div>
+             alt="{{ dest.place_name }}"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="card-img-placeholder" style="display:none;">{{ icons.get(first_tag, '📍') }}</div>
         <!-- MATCH SCORE BADGE -->
         {% if user_input %}
         <div class="card-match {% if dest.match_score >= 80 %}high{% elif dest.match_score >= 50 %}medium{% else %}low{% endif %}">
@@ -140,9 +138,6 @@
         {% for dest in suggestions %}
         <div class="dest-card">
           <div class="card-img">
-            <img src="{{ dest.image_url }}"
-       alt="{{ dest.place_name }}"
-       class="card-image">
             <div class="card-img-placeholder">📍</div>
             <div class="card-match">{{ dest.match_score }}%</div>
           </div>
