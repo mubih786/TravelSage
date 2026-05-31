@@ -3,40 +3,28 @@
 # Tourist Place Recommendation System
 # ============================================
 
-import mysql.connector
-from mysql.connector import Error
+import sqlite3
 
-# ---- Database Configuration ----
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',          # Change to your MySQL username
-    'password': 'root',  # Change to your MySQL password
-    'database': 'tourist_recommender',
-    'charset': 'utf8mb4'
-}
 
 def get_connection():
-    """Create and return a MySQL database connection."""
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        if conn.is_connected():
-            return conn
-    except Error as e:
-        print(f"[DB ERROR] Could not connect to MySQL: {e}")
+        conn = sqlite3.connect("tourist.db")
+        conn.row_factory = sqlite3.Row
+        return conn
+    except Exception as e:
+        print(f"[DB ERROR] {e}")
         return None
 
 def get_cursor(conn):
-    """Return a dictionary cursor."""
-    return conn.cursor(dictionary=True)
+    return conn.cursor()
 
 def close_connection(conn, cursor=None):
-    """Safely close cursor and connection."""
     try:
         if cursor:
             cursor.close()
-        if conn and conn.is_connected():
+        if conn:
             conn.close()
-    except Error:
+    except:
         pass
 
 # ============================================
