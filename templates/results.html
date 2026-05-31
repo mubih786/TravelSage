@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}Results — TravelSage{% endblock %}
+
+{% block content %}
+<!-- RESULTS HEADER -->
+<div class="results-header">
+  <h1>
+    {% if total > 0 %}
+      ✅ Found {{ total }} Destination{{ 's' if total != 1 }}
+    {% else %}
+      😕 No Exact Matches
+    {% endif %}
+  </h1>
+  <p>
+    {% if user_input %}
+      Based on your preferences:
+      {% if user_input.get('budget') %}<strong>{{ user_input.budget }} Budget</strong>{% endif %}
+      {% if user_input.get('season') %} · <strong>{{ user_input.season }}</strong>{% endif %}
+      {% if user_input.get('interests') %} · <strong>{{ user_input.interests|join(', ') }}</strong>{% endif %}
+      {% if user_input.get('region') %} · <strong>{{ user_input.region }} India</strong>{% endif %}
+    {% else %}
+      Showing all destinations. Use the <a href="{{ url_for('search') }}" style="color:var(--primary-light);">Advanced Search</a> to filter.
+    {% endif %}
+  </p>
+</div>
+
+<!-- TOOLBAR -->
+<div class="results-toolbar">
+  <span style="font-size:0.88rem; font-weight:600; color:var(--text-muted);">Sort by:</span>
+  <select onchange="sortResults(this.value)">
+    <option value="match" {% if sort_by=='match' %}selected{% endif %}>🎯 Best Match</option>
+    <option value="rating" {% if sort_by=='rating' %}selected{% endif %}>⭐ Rating</option>
+    <option value="name" {% if sort_by=='name' %}selected{% endif %}>🔤 Name A–Z</option>
+  </select>
+  <span style="font-size:0.88rem; font-weight:600; color:var(--text-muted); margin-left:1rem;">Filter State:</span>
+  <select onchange="filterState(this.value)">
+    <option value="">All States</option>
+    {% for state in all_states %}
+    <option value="{{ state }}" {% if filter_state==state %}selected{% endif %}>{{ state }}</option>
+    {% endfor %}
+  </select>
+  <a href="{{ url_for('search') }}" class="btn btn-ghost btn-sm" style="margin-left:auto;">🔍 Modify Search</a>
+  {% if compare_list %}
+  <a href="{{ url_for('compare') }}" class="btn btn-secondary btn-sm">⚖️ Compare ({{ compare_list|length }})</a>
+  {% endif %}
+</div>
+
+<div class="results-body">
+
+  <!-- WARNINGS -->
+  {% for w in warnings %}
+  <div class="warning-box">⚠️ {{ w }}</div>
+  {% endfor %}
+
+  <!-- RESULTS GRID -->
+  {% if results %}
+  <div class="cards-grid">
+    {% for dest in results %}
+    <div class="dest-card fade-in" style="animation-delay: {{ loop.index0 * 0.05 }}s">
+      <div class="card-img">
+        <div class="card-img-placeholder">
+          {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿','Snow':'❄️','Mountains':'🏔','Tea Gardens':'☕','Backwaters':'🚣','Lakes':'🏞','Waterfalls':'🌊','Coffee':'☕','Tribal Culture':'🎭','Buddhist':'🧘','French Culture':'🥐'} %}
+          {% set first_tag = dest.tags.split(',')[0].strip() %}
+          {{ icons.get(first_tag, '📍') }}
+        </div>
+        <!-- MATCH SCORE BADGE -->
+        {% if user_input %}
+        <div class="card-match {% if dest.match_score >= 80 %}high{% elif dest.match_score >= 50 %}medium{% else %}low{% endif %}">
+          {{ dest.match_score }}% match
+        </div>
+        {% endif %}
+        <button class="card-heart {% if dest.id in wishlist_ids %}active{% endif %}"
+                onclick="toggleWishlist({{ dest.id }}, this)">
+          {% if dest.id in wishlist_ids %}❤️{% else %}🤍{% endif %}
+        </button>
+      </div>
+
+      {% if dest.badges %}
+      <div class="card-badges">
+        {% for b in dest.badges[:2] %}
+        <span class="badge {{ b.class }}">{{ b.label }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="card-body">
+        <div class="card-name">{{ dest.place_name }}</div>
+        <div class="card-state">📍 {{ dest.state }} · {{ dest.region }} India</div>
+        <div class="card-desc">{{ dest.description[:130] }}...</div>
+
+        {% if user_input %}
+        <!-- MATCH BAR -->
+        <div class="score-bar-wrap">
+          <div class="score-bar-label">
+            <span style="font-size:0.78rem; color:var(--text-muted);">Match Score</span>
+            <span style="font-size:0.78rem; font-weight:700;">{{ dest.match_score }}%</span>
+          </div>
+          <div class="score-bar-bg">
+            <div class="score-bar-fill {% if dest.match_score >= 80 %}high{% elif dest.match_score >= 50 %}medium{% else %}low{% endif %}"
+                 style="width: {{ dest.match_score }}%"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="card-tags">
+          {% for tag in dest.tags.split(',')[:4] %}
+          <span class="tag">{{ tag.strip() }}</span>
+          {% endfor %}
+        </div>
+        <div class="card-footer">
+          <div class="card-rating">⭐ {{ "%.1f"|format(dest.rating) }}</div>
+          <span class="card-budget budget-{{ dest.budget_category|lower }}">
+            {% if dest.budget_category == 'Low' %}💚{% elif dest.budget_category == 'Medium' %}🟡{% else %}🔴{% endif %}
+            {{ dest.budget_category }}
+          </span>
+          <div class="card-actions">
+            <a href="{{ url_for('place_detail', dest_id=dest.id) }}" class="btn-detail">Details</a>
+            <button class="btn-compare" onclick="addToCompare({{ dest.id }}, this)" title="Compare">⚖️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- NO RESULTS -->
+  {% else %}
+  <div class="wishlist-empty">
+    <div class="icon">😕</div>
+    <h2>No Exact Matches Found</h2>
+    <p>Try removing some filters or use fewer criteria.</p>
+
+    {% if suggestions %}
+    <div style="margin-top:2rem; text-align:left;">
+      <div class="warning-box" style="margin-bottom:1.5rem;">💡 {{ suggestion_msg }}</div>
+      <div class="cards-grid">
+        {% for dest in suggestions %}
+        <div class="dest-card">
+          <div class="card-img">
+            <div class="card-img-placeholder">📍</div>
+            <div class="card-match">{{ dest.match_score }}%</div>
+          </div>
+          <div class="card-body">
+            <div class="card-name">{{ dest.place_name }}</div>
+            <div class="card-state">📍 {{ dest.state }}</div>
+            <div class="card-footer">
+              <div class="card-rating">⭐ {{ "%.1f"|format(dest.rating) }}</div>
+              <a href="{{ url_for('place_detail', dest_id=dest.id) }}" class="btn-detail">Details</a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div style="margin-top:2rem; display:flex; gap:1rem; justify-content:center;">
+      <a href="{{ url_for('search') }}" class="btn btn-primary">🔍 Modify Search</a>
+      <a href="{{ url_for('results') }}" class="btn btn-ghost">👀 Show All Destinations</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function sortResults(val) {
+  const url = new URL(window.location);
+  url.searchParams.set('sort', val);
+  window.location = url;
+}
+function filterState(val) {
+  const url = new URL(window.location);
+  if (val) url.searchParams.set('filter_state', val);
+  else url.searchParams.delete('filter_state');
+  window.location = url;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Compare Destinations — TravelSage{% endblock %}
+{% block content %}
+<div class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">⚖️ Compare Destinations</div>
+      <div class="section-subtitle">Side-by-side comparison of up to 3 places</div>
+    </div>
+    {% if items %}
+    <button class="btn btn-ghost btn-sm" onclick="clearAllCompare()">🗑 Clear All</button>
+    {% endif %}
+  </div>
+
+  {% if items %}
+  <div style="overflow-x:auto;">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th style="width:160px;">Feature</th>
+          {% for dest in items %}
+          <th>
+            <div style="font-size:1rem; font-family:var(--font-display);">{{ dest.place_name }}</div>
+            <div style="font-weight:400; color:var(--text-muted);">{{ dest.state }}</div>
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% set rows = [
+          ('⭐ Rating', 'rating'),
+          ('💰 Budget', 'budget_category'),
+          ('📍 Region', 'region'),
+          ('🌤 Best Season', 'best_season'),
+          ('🏔 Terrain', 'terrain'),
+          ('🧗 Activity Level', 'activity_level'),
+          ('👥 Best For', 'travel_type'),
+          ('🌡 Temperature', 'temperature_range'),
+          ('📶 Connectivity', 'connectivity'),
+          ('🛡 Safety', 'safety_level'),
+          ('👶 Age Groups', 'age_group'),
+          ('🏨 Accommodation', 'accommodation'),
+          ('🍽 Food', 'food_options'),
+          ('✈️ Nearest Airport', 'nearest_airport'),
+        ] %}
+        {% for label, key in rows %}
+        <tr>
+          <td>{{ label }}</td>
+          {% for dest in items %}
+          <td>
+            {% if key == 'rating' %}⭐ {{ "%.1f"|format(dest[key]) }}
+            {% elif key == 'temperature_range' %}{{ dest[key] }}°C
+            {% elif key == 'eco_friendly' %}{{ '🌿 Yes' if dest[key] else '—' }}
+            {% else %}{{ dest[key] or '—' }}
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+        <tr>
+          <td>🔗 Action</td>
+          {% for dest in items %}
+          <td><a href="{{ url_for('place_detail', dest_id=dest.id) }}" class="btn btn-primary btn-sm">View Details</a></td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="wishlist-empty">
+    <div class="icon">⚖️</div>
+    <h2>Nothing to Compare Yet</h2>
+    <p>Click the ⚖️ button on destination cards to add them here (max 3).</p>
+    <a href="{{ url_for('search') }}" class="btn btn-primary btn-lg">🔍 Find Destinations</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function clearAllCompare() {
+  await fetch('/api/compare/clear', {method:'POST'});
+  window.location.reload();
+}
+</script>
+{% endblock %}

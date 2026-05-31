@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% block title %}{{ dest.place_name }} — TravelSage{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<div class="detail-hero">
+  <div class="card-img-placeholder" style="position:absolute;inset:0;width:100%;height:100%;font-size:8rem;display:flex;align-items:center;justify-content:center;opacity:0.3;">
+    {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿','Snow':'❄️'} %}
+    {{ icons.get(dest.tags.split(',')[0].strip(), '📍') }}
+  </div>
+  <div class="detail-hero-content">
+    <div class="state">📍 {{ dest.state }} · {{ dest.region }} India</div>
+    <h1>{{ dest.place_name }}</h1>
+    <div style="display:flex; gap:1rem; align-items:center; margin-top:0.75rem; flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,0.2); padding:0.3rem 0.8rem; border-radius:100px; font-size:0.88rem;">⭐ {{ "%.1f"|format(dest.rating) }} Rating</span>
+      <span style="background:rgba(255,255,255,0.2); padding:0.3rem 0.8rem; border-radius:100px; font-size:0.88rem;">
+        {% if dest.budget_category == 'Low' %}💚{% elif dest.budget_category == 'Medium' %}🟡{% else %}🔴{% endif %}
+        {{ dest.budget_category }} Budget
+      </span>
+      <span style="background:rgba(255,255,255,0.2); padding:0.3rem 0.8rem; border-radius:100px; font-size:0.88rem;">🧗 {{ dest.activity_level }}</span>
+      {% if dest.altitude_meters and dest.altitude_meters > 0 %}
+      <span style="background:rgba(255,255,255,0.2); padding:0.3rem 0.8rem; border-radius:100px; font-size:0.88rem;">⛰ {{ dest.altitude_meters }}m altitude</span>
+      {% endif %}
+      {% for b in dest.badges %}
+      <span class="badge {{ b.class }}">{{ b.label }}</span>
+      {% endfor %}
+    </div>
+    <div style="display:flex; gap:0.75rem; margin-top:1.25rem; flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm {% if dest.id in wishlist_ids %}active{% endif %}"
+              id="wishlistBtn" onclick="toggleWishlist({{ dest.id }}, this)">
+        {% if dest.id in wishlist_ids %}❤️ Saved{% else %}🤍 Save to Wishlist{% endif %}
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="addToCompare({{ dest.id }}, this)" style="border-color:rgba(255,255,255,0.4); color:black;">⚖️ Add to Compare</button>
+      {% if dest.google_maps_url and dest.google_maps_url != '#' %}
+      <a href="{{ dest.google_maps_url }}" target="_blank" class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,0.4); color:black;">🗺 View on Maps</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="detail-body">
+  <div class="detail-grid">
+    <!-- MAIN COLUMN -->
+    <div>
+      <!-- ABOUT -->
+      <div class="detail-info-box">
+        <h2>📖 About {{ dest.place_name }}</h2>
+        <p style="color:var(--text-muted); line-height:1.7;">{{ dest.description }}</p>
+      </div>
+
+      <!-- THINGS TO DO -->
+      <div class="detail-info-box">
+        <h2>🎯 Things To Do</h2>
+        <div class="things-list">
+          {% for thing in dest.things_list %}
+          <span class="thing-tag">✅ {{ thing }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- BEST TIME -->
+      <div class="detail-info-box">
+        <h2>📅 Best Time to Visit</h2>
+        <p style="color:var(--text-muted); margin-bottom:1rem;">{{ dest.best_time_detail }}</p>
+        <div class="months-grid">
+          {% for m in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+          <div class="month-pill {% if m in dest.months_list %}best{% endif %}">{{ m }}</div>
+          {% endfor %}
+        </div>
+        <div style="margin-top:0.75rem; font-size:0.82rem; color:var(--text-muted); display:flex; gap:1rem;">
+          <span>🟢 Best months</span>
+          <span>⚪ Other months</span>
+        </div>
+      </div>
+
+      <!-- TAGS -->
+      <div class="detail-info-box">
+        <h2>🏷 Tags & Interests</h2>
+        <div class="things-list">
+          {% for tag in dest.tags_list %}
+          <a href="/results?interests={{ tag }}" class="thing-tag" style="text-decoration:none; cursor:pointer;">{{ tag }}</a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- REVIEWS SECTION -->
+      <div class="detail-info-box">
+        <h2>⭐ Reviews ({{ reviews|length }})</h2>
+        {% if reviews %}
+          {% for r in reviews %}
+          <div class="review-card">
+            <div class="review-header">
+              <div class="reviewer-name">{{ r.reviewer_name }}</div>
+              <div class="review-rating">{{ '⭐' * r.rating|int }}</div>
+            </div>
+            {% if r.comment %}<div class="review-text">{{ r.comment }}</div>{% endif %}
+            <div style="font-size:0.75rem; color:var(--text-light); margin-top:0.4rem;">
+              {{ r.reviewed_at.strftime('%b %d, %Y') if r.reviewed_at else '' }}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p style="color:var(--text-muted); font-size:0.9rem;">No reviews yet. Be the first!</p>
+        {% endif %}
+
+        <!-- ADD REVIEW FORM -->
+        <div style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+          <h3 style="font-size:1rem; margin-bottom:1rem;">✍️ Write a Review</h3>
+          <div class="review-form">
+            <input type="text" id="reviewName" placeholder="Your name (optional)">
+            <select id="reviewRating">
+              <option value="5">⭐⭐⭐⭐⭐ Excellent (5)</option>
+              <option value="4">⭐⭐⭐⭐ Good (4)</option>
+              <option value="3">⭐⭐⭐ Average (3)</option>
+              <option value="2">⭐⭐ Poor (2)</option>
+              <option value="1">⭐ Terrible (1)</option>
+            </select>
+            <textarea id="reviewComment" placeholder="Share your experience..."></textarea>
+            <button class="btn btn-primary btn-sm" onclick="submitReview({{ dest.id }})">Submit Review</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div>
+      <!-- QUICK INFO -->
+      <div class="detail-sidebar-card">
+        <h3>ℹ️ Quick Info</h3>
+        <div class="info-row"><span class="info-label">State</span><span class="info-value">{{ dest.state }}</span></div>
+        <div class="info-row"><span class="info-label">Region</span><span class="info-value">{{ dest.region }} India</span></div>
+        <div class="info-row"><span class="info-label">Budget</span><span class="info-value">{{ dest.budget_category }}</span></div>
+        <div class="info-row"><span class="info-label">Best Season</span><span class="info-value">{{ dest.best_season }}</span></div>
+        <div class="info-row"><span class="info-label">Activity Level</span><span class="info-value">{{ dest.activity_level }}</span></div>
+        <div class="info-row"><span class="info-label">Terrain</span><span class="info-value">{{ dest.terrain }}</span></div>
+        <div class="info-row"><span class="info-label">Crowd Level</span><span class="info-value">{{ dest.crowd_level }}</span></div>
+        <div class="info-row"><span class="info-label">Temperature</span><span class="info-value">{{ dest.temperature_range }}°C</span></div>
+        <div class="info-row"><span class="info-label">Connectivity</span><span class="info-value">{{ dest.connectivity }}</span></div>
+        <div class="info-row"><span class="info-label">Safety</span><span class="info-value">{{ dest.safety_level }}</span></div>
+        {% if dest.altitude_meters > 0 %}
+        <div class="info-row"><span class="info-label">Altitude</span><span class="info-value">{{ dest.altitude_meters }}m</span></div>
+        {% endif %}
+        <div class="info-row"><span class="info-label">Nearest Airport</span><span class="info-value">{{ dest.nearest_airport }}</span></div>
+        <div class="info-row"><span class="info-label">Distance</span><span class="info-value">{{ dest.distance_from_metro }}</span></div>
+      </div>
+
+      <!-- ACCOMMODATION -->
+      <div class="detail-sidebar-card">
+        <h3>🏨 Accommodation</h3>
+        <div class="things-list">
+          {% for acc in dest.accommodation.split(',') %}
+          <span class="thing-tag">{{ acc.strip() }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- TRAVEL TYPE -->
+      <div class="detail-sidebar-card">
+        <h3>👥 Best For</h3>
+        <div class="things-list">
+          {% for t in dest.travel_type.split(',') %}
+          <span class="thing-tag">{{ t.strip() }}</span>
+          {% endfor %}
+        </div>
+        <div style="margin-top:0.75rem;">
+          <div style="font-size:0.82rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">Age Groups</div>
+          <div class="things-list">
+            {% for a in dest.age_group.split(',') %}
+            <span class="thing-tag">{{ a.strip() }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOD -->
+      <div class="detail-sidebar-card">
+        <h3>🍽 Food Options</h3>
+        <div class="things-list">
+          {% for f in dest.food_options.split(',') %}
+          <span class="thing-tag">{{ f.strip() }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- ECO -->
+      {% if dest.eco_friendly %}
+      <div class="detail-sidebar-card" style="background:#F0FBF5; border-color:#86efac;">
+        <h3>🌿 Eco-Friendly Destination</h3>
+        <p style="font-size:0.88rem; color:var(--text-muted);">This destination supports sustainable tourism practices.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- SIMILAR PLACES -->
+  {% if similar %}
+  <div style="margin-top:2rem;">
+    <div class="section-header" style="margin-bottom:1.25rem;">
+      <div class="section-title" style="font-size:1.5rem;">Similar Places in {{ dest.region }} India</div>
+    </div>
+    <div class="cards-grid cards-grid-4">
+      {% for s in similar %}
+      <div class="dest-card">
+        <div class="card-img">
+          <div class="card-img-placeholder">📍</div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">{{ s.place_name }}</div>
+          <div class="card-state">📍 {{ s.state }}</div>
+          <div class="card-footer">
+            <div class="card-rating">⭐ {{ "%.1f"|format(s.rating) }}</div>
+            <a href="{{ url_for('place_detail', dest_id=s.id) }}" class="btn-detail">View</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function submitReview(destId) {
+  const name = document.getElementById('reviewName').value || 'Anonymous';
+  const rating = parseInt(document.getElementById('reviewRating').value);
+  const comment = document.getElementById('reviewComment').value;
+  await fetch('/api/review/add', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({dest_id: destId, name, rating, comment})
+  });
+  showToast('✅ Review submitted! Refresh to see it.');
+  document.getElementById('reviewComment').value = '';
+  document.getElementById('reviewName').value = '';
+}
+</script>
+{% endblock %}

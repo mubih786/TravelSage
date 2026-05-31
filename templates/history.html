@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Search History — TravelSage{% endblock %}
+{% block content %}
+<div class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">🕘 Search History</div>
+      <div class="section-subtitle">Your recent searches</div>
+    </div>
+  </div>
+  {% if searches %}
+    {% for s in searches %}
+    <div class="history-item">
+      <div>
+        <div class="history-filters">
+          {% if s.budget %}<span class="history-filter-tag">💰 {{ s.budget }}</span>{% endif %}
+          {% if s.season %}<span class="history-filter-tag">🌤 {{ s.season }}</span>{% endif %}
+          {% if s.interests %}<span class="history-filter-tag">🎯 {{ s.interests }}</span>{% endif %}
+          {% if s.region %}<span class="history-filter-tag">📍 {{ s.region }}</span>{% endif %}
+          {% if s.travel_type %}<span class="history-filter-tag">🧳 {{ s.travel_type }}</span>{% endif %}
+          {% if s.activity_level %}<span class="history-filter-tag">🏃 {{ s.activity_level }}</span>{% endif %}
+          {% if s.trip_purpose %}<span class="history-filter-tag">🎯 {{ s.trip_purpose }}</span>{% endif %}
+          {% if not s.budget and not s.season and not s.interests %}<span class="history-filter-tag">All Destinations</span>{% endif %}
+        </div>
+        <div class="history-meta" style="margin-top:0.35rem;">
+          Found <strong>{{ s.results_count }} result{{ 's' if s.results_count != 1 }}</strong> ·
+          {{ s.searched_at.strftime('%b %d, %Y %I:%M %p') if s.searched_at else 'Recently' }}
+        </div>
+      </div>
+      <a href="/results?{% if s.budget %}budget={{ s.budget }}&{% endif %}{% if s.season %}season={{ s.season }}&{% endif %}{% if s.region %}region={{ s.region }}&{% endif %}{% if s.interests %}{% for i in s.interests.split(',') %}interests={{ i }}&{% endfor %}{% endif %}"
+         class="btn btn-ghost btn-sm">🔁 Repeat</a>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="wishlist-empty">
+    <div class="icon">🕘</div>
+    <h2>No Search History Yet</h2>
+    <p>Your searches will appear here after you explore destinations.</p>
+    <a href="{{ url_for('search') }}" class="btn btn-primary btn-lg">🔍 Start Searching</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

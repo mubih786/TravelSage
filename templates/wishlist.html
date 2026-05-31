@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}My Wishlist — TravelSage{% endblock %}
+{% block content %}
+<div class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">❤️ My Wishlist</div>
+      <div class="section-subtitle">{{ items|length }} saved destination{{ 's' if items|length != 1 }}</div>
+    </div>
+    {% if items %}
+    <a href="{{ url_for('search') }}" class="btn btn-primary btn-sm">🔍 Find More</a>
+    {% endif %}
+  </div>
+
+  {% if items %}
+  <div class="cards-grid">
+    {% for dest in items %}
+    <div class="dest-card fade-in" id="wish-{{ dest.id }}">
+      <div class="card-img">
+        <div class="card-img-placeholder">
+          {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿'} %}
+          {{ icons.get(dest.tags.split(',')[0].strip(), '📍') }}
+        </div>
+        <button class="card-heart active" onclick="removeWishlistItem({{ dest.id }}, this)" title="Remove">❤️</button>
+      </div>
+      {% if dest.badges %}
+      <div class="card-badges">
+        {% for b in dest.badges[:2] %}<span class="badge {{ b.class }}">{{ b.label }}</span>{% endfor %}
+      </div>
+      {% endif %}
+      <div class="card-body">
+        <div class="card-name">{{ dest.place_name }}</div>
+        <div class="card-state">📍 {{ dest.state }}</div>
+        <div class="card-desc">{{ dest.description[:120] }}...</div>
+        <div class="card-tags">
+          {% for tag in dest.tags.split(',')[:3] %}<span class="tag">{{ tag.strip() }}</span>{% endfor %}
+        </div>
+        <div class="card-footer">
+          <div class="card-rating">⭐ {{ "%.1f"|format(dest.rating) }}</div>
+          <span class="card-budget budget-{{ dest.budget_category|lower }}">{{ dest.budget_category }}</span>
+          <div class="card-actions">
+            <a href="{{ url_for('place_detail', dest_id=dest.id) }}" class="btn-detail">View</a>
+            <button class="btn-compare" onclick="addToCompare({{ dest.id }}, this)">⚖️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="wishlist-empty">
+    <div class="icon">💔</div>
+    <h2>Your Wishlist is Empty</h2>
+    <p>Start exploring destinations and save the ones you love!</p>
+    <a href="{{ url_for('search') }}" class="btn btn-primary btn-lg">🔍 Find Destinations</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function removeWishlistItem(id, btn) {
+  const res = await fetch('/api/wishlist/toggle', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({dest_id: id})
+  });
+  document.getElementById('wish-' + id).remove();
+  showToast('💔 Removed from wishlist');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+{% block title %}Search Destinations — TravelSage{% endblock %}
+
+{% block content %}
+<div class="search-page">
+  <h1>🔍 Find Your Destination</h1>
+  <p>All filters are <strong>optional</strong> — fill in what you know, skip what you don't. The more you tell us, the better the match!</p>
+
+  <form method="POST" action="{{ url_for('results') }}" id="searchForm">
+
+    <!-- SECTION 1: Budget & Duration -->
+    <div class="form-section">
+      <div class="form-section-header" onclick="toggleSection(this)">
+        <h3>💰 Budget & Trip Duration</h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="form-section-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Budget Range</label>
+            <select name="budget">
+              <option value="">Any Budget</option>
+              <option value="Low">💚 Low — Budget Travel</option>
+              <option value="Medium">🟡 Medium — Mid-range</option>
+              <option value="High">🔴 High — Premium/Luxury</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Trip Duration</label>
+            <select name="duration">
+              <option value="">Any Duration</option>
+              <option value="Weekend">Weekend (1–2 days)</option>
+              <option value="Short">Short Trip (3–5 days)</option>
+              <option value="Long">Long Trip (6–10 days)</option>
+              <option value="Extended">Extended (10+ days)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Accommodation</label>
+            <select name="accommodation">
+              <option value="">Any Type</option>
+              <option value="Budget">Budget Hotels / Hostels</option>
+              <option value="Mid-range">Mid-range Hotels</option>
+              <option value="Luxury">Luxury Resorts</option>
+              <option value="Camping">Camping / Glamping</option>
+              <option value="Homestay">Homestays</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Season & Time -->
+    <div class="form-section">
+      <div class="form-section-header" onclick="toggleSection(this)">
+        <h3>🌤 Travel Season & Time</h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="form-section-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Travel Season</label>
+            <select name="season">
+              <option value="">Any Season</option>
+              <option value="Summer">☀️ Summer (Mar–Jun)</option>
+              <option value="Monsoon">🌧 Monsoon (Jul–Sep)</option>
+              <option value="Winter">❄️ Winter (Oct–Feb)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Month of Travel</label>
+            <select name="month">
+              <option value="">Any Month</option>
+              {% for m in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+              <option value="{{ m }}">{{ m }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Weather Preference</label>
+            <select name="weather_pref">
+              <option value="">Any Weather</option>
+              <option value="Cool">🧊 Cool / Cold</option>
+              <option value="Hot">☀️ Hot & Sunny</option>
+              <option value="Rainy">🌧 Rainy / Misty</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Interests -->
+    <div class="form-section">
+      <div class="form-section-header" onclick="toggleSection(this)">
+        <h3>🎯 Interests & Activities <small style="font-weight:400; color:var(--text-muted);"> — Select multiple</small></h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="form-section-body">
+        <div class="checkbox-grid">
+          {% set interests_list = [
+            ('🏖','Beaches'),('⛰','Hills'),('🏛','Historical'),('🛕','Spiritual'),
+            ('🧗','Adventure'),('🐘','Wildlife'),('🌿','Nature'),('🏔','Mountains'),
+            ('🏜','Desert'),('❄️','Snow'),('🌊','Waterfalls'),('🏝','Islands'),
+            ('🌙','Nightlife'),('🛍','Shopping'),('🍜','Food & Culture'),('📸','Photography'),
+            ('🚣','Rivers & Lakes'),('🌱','Eco-Tourism'),('☕','Tea & Coffee Gardens'),('🎭','Tribal Culture')
+          ] %}
+          {% for icon, interest in interests_list %}
+          <label class="checkbox-item" onclick="this.classList.toggle('checked')">
+            <input type="checkbox" name="interests" value="{{ interest }}">
+            {{ icon }} {{ interest }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: Travel Style -->
+    <div class="form-section">
+      <div class="form-section-header" onclick="toggleSection(this)">
+        <h3>🧳 Travel Style</h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="form-section-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Traveling As</label>
+            <select name="travel_type">
+              <option value="">Any</option>
+              <option value="Solo">🚶 Solo</option>
+              <option value="Couple">💑 Couple</option>
+              <option value="Family">👨‍👩‍👧 Family</option>
+              <option value="Friends">👫 Group of Friends</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Physical Activity Level</label>
+            <select name="activity_level">
+              <option value="">Any Level</option>
+              <option value="Easy">🟢 Easy — Light walking</option>
+              <option value="Moderate">🟡 Moderate — Some hiking</option>
+              <option value="Challenging">🔴 Challenging — Trekking/Adventure</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Experience Type</label>
+            <select name="experience_type">
+              <option value="">Any</option>
+              <option value="Thrill">⚡ Thrill & Excitement</option>
+              <option value="Peace">🕊 Peace & Relaxation</option>
+              <option value="Cultural">🎭 Cultural Immersion</option>
+              <option value="Learning">📚 Learning & Education</option>
+              <option value="Luxury">💎 Luxury & Comfort</option>
+              <option value="Backpacking">🎒 Backpacking</option>
+              <option value="Photography">📸 Photography</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: Location -->
+    <div class="form-section">
+      <div class="form-section-header" onclick="toggleSection(this)">
+        <h3>📍 Location Preferences</h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="form-section-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Region of India</label>
+            <select name="region">
+              <option value="">All Regions</option>
+              <option value="North">🏔 North India</option>
+              <option value="South">🌴 South India</option>
+              <option value="East">🌊 East India</option>
+              <option value="West">🏜 West India</option>
+              <option value="Northeast">🌿 Northeast India</option>
+              <option value="Central">🦁 Central India</option>
+              <option value="Islands">🏝 Islands</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Terrain Type</label>
+            <select name="terrain">
+              <option value="">Any Terrain</option>
+              <option value="Coastal">🌊 Coastal / Beach</option>
+              <option value="Hilly">⛰ Hilly / Mountainous</option>
+              <option value="Plains">🌾 Plains</option>
+              <option value="Desert">🏜 Desert</option>
+              <option value="Forest">🌳 Forest / Jungle</option>
+              <option value="Island">🏝 Island</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Crowd Preference</label>
+            <select name="crowd">
+              <option value="">Any</option>
+              <option value="Popular">🌟 Popular / Well Known</option>
+              <option value="Offbeat">💎 Offbeat / Less Crowded</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: Traveler Profile -->
+    <div class="form-section">
+      <div class="form-section-header" onclick="toggleSection(this)">
+        <h3>👤 Traveler Profile</h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="form-section-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Age Group</label>
+            <select name="age_group">
+              <option value="">Any</option>
+              <option value="Kids">👶 Kids Friendly (Family with children)</option>
+              <option value="YoungAdults">🧑 Young Adults (18–30)</option>
+              <option value="Adults">🧔 Adults (30–50)</option>
+              <option value="Senior">👴 Senior Friendly (50+)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Trip Purpose</label>
+            <select name="trip_purpose">
+              <option value="">Any</option>
+              <option value="Honeymoon">💑 Honeymoon</option>
+              <option value="Anniversary">🎉 Anniversary</option>
+              <option value="Vacation">🏖 Vacation</option>
+              <option value="Adventure">🧗 Adventure Trip</option>
+              <option value="Pilgrimage">🛕 Pilgrimage</option>
+              <option value="Photography">📸 Photography</option>
+              <option value="Educational">📚 Educational</option>
+              <option value="Cultural">🎭 Cultural Exploration</option>
+              <option value="Nature">🌿 Nature Retreat</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Food Preference</label>
+            <select name="food">
+              <option value="">Any</option>
+              <option value="Vegetarian">🥗 Vegetarian Friendly</option>
+              <option value="Seafood">🦐 Seafood Lover</option>
+              <option value="StreetFood">🍜 Street Food Explorer</option>
+              <option value="FineDining">🍽 Fine Dining</option>
+              <option value="Local">🍛 Local Cuisine</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 7: Special Requirements -->
+    <div class="form-section">
+      <div class="form-section-header" onclick="toggleSection(this)">
+        <h3>⚙️ Special Requirements</h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="form-section-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Internet / Connectivity</label>
+            <select name="connectivity">
+              <option value="">No Preference</option>
+              <option value="Good Internet Required">📶 Good Internet Required</option>
+              <option value="Moderate">📡 Moderate Connectivity OK</option>
+              <option value="Okay with Low Connectivity">🌐 Okay with Low Connectivity</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Accessibility Need</label>
+            <select name="accessibility">
+              <option value="">No Special Need</option>
+              <option value="Wheelchair">♿ Wheelchair Accessible</option>
+              <option value="Accessible">✅ Easy Access Only</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Health Consideration</label>
+            <select name="health">
+              <option value="">None</option>
+              <option value="avoid_high_altitude">⛰ Avoid High Altitude (2500m+)</option>
+              <option value="avoid_heat">🌡 Avoid Extreme Heat</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Travel Mode</label>
+            <select name="travel_mode">
+              <option value="">Any</option>
+              <option value="Road">🚗 Road Trip Friendly</option>
+              <option value="Train">🚂 Train Accessible</option>
+              <option value="Flight">✈️ Flight Required OK</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Safety Preference</label>
+            <select name="safety">
+              <option value="">Any</option>
+              <option value="High">🛡 Very Safe / Tourist Friendly</option>
+              <option value="Moderate">✅ Moderate Safety OK</option>
+              <option value="Adventure">⚠️ Adventure Risk Acceptable</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Eco Preference</label>
+            <select name="eco_preference">
+              <option value="">No Preference</option>
+              <option value="Eco-Friendly">🌿 Eco-Friendly / Sustainable Only</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="form-submit">
+      <button type="button" class="btn btn-ghost btn-lg" onclick="resetForm()">🔄 Reset All</button>
+      <button type="submit" class="btn btn-primary btn-lg">🔍 Find My Destinations</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleSection(header) {
+  header.parentElement.classList.toggle('collapsed');
+}
+function resetForm() {
+  document.getElementById('searchForm').reset();
+  document.querySelectorAll('.checkbox-item').forEach(el => el.classList.remove('checked'));
+}
+// Highlight checked checkboxes
+document.querySelectorAll('.checkbox-item input').forEach(cb => {
+  cb.addEventListener('change', () => {
+    cb.parentElement.classList.toggle('checked', cb.checked);
+  });
+});
+</script>
+{% endblock %}

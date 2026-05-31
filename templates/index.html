@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% block title %}TravelSage India — Find Your Perfect Destination{% endblock %}
+
+{% block content %}
+
+{% macro dest_card(dest, wishlist_ids) %}
+<div class="dest-card fade-in">
+  <div class="card-img">
+    <div class="card-img-placeholder">
+      {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿','Snow':'❄️'} %}
+      {% set first_tag = dest.tags.split(',')[0].strip() %}
+      {{ icons.get(first_tag, '📍') }}
+    </div>
+    <button class="card-heart {% if dest.id in wishlist_ids %}active{% endif %}"
+            onclick="toggleWishlist({{ dest.id }}, this)" title="Save to Wishlist">
+      {% if dest.id in wishlist_ids %}❤️{% else %}🤍{% endif %}
+    </button>
+  </div>
+  {% if dest.badges %}
+  <div class="card-badges">
+    {% for b in dest.badges[:2] %}
+    <span class="badge {{ b.class }}">{{ b.label }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="card-body">
+    <div class="card-name">{{ dest.place_name }}</div>
+    <div class="card-state">📍 {{ dest.state }}</div>
+    <div class="card-desc">{{ dest.description[:120] }}...</div>
+    <div class="card-tags">
+      {% for tag in dest.tags.split(',')[:3] %}
+      <span class="tag">{{ tag.strip() }}</span>
+      {% endfor %}
+    </div>
+    <div class="card-footer">
+      <div class="card-rating">⭐ {{ "%.1f"|format(dest.rating) }}</div>
+      <span class="card-budget budget-{{ dest.budget_category|lower }}">
+        {% if dest.budget_category == 'Low' %}💚 Budget{% elif dest.budget_category == 'Medium' %}🟡 Mid-range{% else %}🔴 Premium{% endif %}
+      </span>
+      <div class="card-actions">
+        <a href="{{ url_for('place_detail', dest_id=dest.id) }}" class="btn-detail">View</a>
+        <button class="btn-compare" onclick="addToCompare({{ dest.id }}, this)" title="Add to Compare">⚖️</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+<section class="hero">
+  <div class="hero-tag">🌟 AI-Powered Travel Recommendations</div>
+  <h1>Discover <em>India</em><br>Like Never Before</h1>
+  <p>Tell us your preferences — budget, season, interests — and our expert system finds your perfect destination from 100+ places across India.</p>
+  <div class="hero-search autocomplete-wrapper">
+    <input type="text" id="heroSearch" placeholder="Search a place... e.g. Goa, Manali, Hampi" autocomplete="off">
+    <button onclick="heroSearchGo()">Search</button>
+    <div class="autocomplete-list" id="heroAutocomplete"></div>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><strong>100+</strong><span>Destinations</span></div>
+    <div class="hero-stat"><strong>25+</strong><span>Input Filters</span></div>
+    <div class="hero-stat"><strong>15</strong><span>Expert Rules</span></div>
+    <div class="hero-stat"><strong>100%</strong><span>Personalized</span></div>
+  </div>
+</section>
+
+<div style="background: white; border-bottom: 1px solid var(--border); padding: 1rem 2rem;">
+  <div style="max-width:1280px; margin:0 auto; display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+    <span style="font-weight:600; font-size:0.85rem; color:var(--text-muted);">Quick Search:</span>
+    
+    {% set quick_filters = [
+      ('🏖 Beaches','Beaches',''),('⛰ Hills','Hills',''),
+      ('🏛 Historical','Historical',''),('🐘 Wildlife','Wildlife',''),
+      ('🧘 Spiritual','Spiritual',''),('🏜 Desert','Desert',''),
+      ('🌊 Islands','Islands',''),('🌿 Nature','Nature',''),
+      ('🎒 Offbeat','','Offbeat'),('💑 Romantic','','')
+    ] %}
+    
+    {% for label, interest, crowd in quick_filters %}
+    <a href="/results?{% if interest %}interests={{ interest }}{% endif %}{% if crowd %}&crowd={{ crowd }}{% endif %}"
+       class="chip" style="text-decoration:none; cursor:pointer; transition:all 0.2s;"
+       onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'"
+       onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+      {{ label }}
+    </a>
+    {% endfor %}
+    <a href="{{ url_for('search') }}" class="btn btn-primary btn-sm" style="margin-left:auto;">
+      🔍 Advanced Search
+    </a>
+  </div>
+</div>
+
+{% if trending %}
+<div class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">🔥 Trending Now</div>
+      <div class="section-subtitle">Most popular destinations this season</div>
+    </div>
+    <a href="/results?sort=rating" class="see-all">See all →</a>
+  </div>
+  <div class="cards-grid">
+    {% for dest in trending %}
+    {{ dest_card(dest, wishlist_ids) }}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if top_rated %}
+<div style="background: white; padding: 1px 0;">
+<div class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">⭐ Top Rated</div>
+      <div class="section-subtitle">Highest rated by travelers like you</div>
+    </div>
+    <a href="/results?sort=rating" class="see-all">See all →</a>
+  </div>
+  <div class="cards-grid">
+    {% for dest in top_rated %}
+    {{ dest_card(dest, wishlist_ids) }}
+    {% endfor %}
+  </div>
+</div>
+</div>
+{% endif %}
+
+{% if hidden_gems %}
+<div class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">💎 Hidden Gems</div>
+      <div class="section-subtitle">Offbeat destinations most travelers miss</div>
+    </div>
+    <a href="/results?crowd=Offbeat" class="see-all">See all →</a>
+  </div>
+  <div class="cards-grid cards-grid-4">
+    {% for dest in hidden_gems %}
+    {{ dest_card(dest, wishlist_ids) }}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div style="background: linear-gradient(135deg, var(--secondary), #1a3a2e); padding: 4rem 2rem; text-align:center; color:white;">
+  <h2 style="font-family:var(--font-display); font-size:2.2rem; margin-bottom:0.75rem;">
+    Ready to Find Your Dream Destination?
+  </h2>
+  <p style="color:rgba(255,255,255,0.7); margin-bottom:2rem; font-size:1.05rem;">
+    Answer a few questions and our AI expert system matches you with the perfect Indian destination.
+  </p>
+  <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+    <a href="{{ url_for('search') }}" class="btn btn-primary btn-lg">🔍 Start Search</a>
+    <a href="{{ url_for('surprise') }}" class="btn btn-lg" style="background:var(--accent); color:var(--text);">🎲 Surprise Me!</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const heroInput = document.getElementById('heroSearch');
+const heroAc = document.getElementById('heroAutocomplete');
+heroInput.addEventListener('input', async () => {
+  const q = heroInput.value.trim();
+  if (q.length < 2) { heroAc.style.display='none'; return; }
+  const res = await fetch(`/api/search/autocomplete?q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  if (!data.length) { heroAc.style.display='none'; return; }
+  heroAc.innerHTML = data.map(d =>
+    `<div class="autocomplete-item" onclick="window.location='/place/${d.id}'">${d.place_name} — ${d.state}</div>`
+  ).join('');
+  heroAc.style.display = 'block';
+});
+document.addEventListener('click', e => { if (!e.target.closest('.autocomplete-wrapper')) heroAc.style.display='none'; });
+function heroSearchGo() {
+  const q = heroInput.value.trim();
+  if (q) window.location = `/results?q=${encodeURIComponent(q)}`;
+}
+heroInput.addEventListener('keydown', e => { if (e.key === 'Enter') heroSearchGo(); });
+</script>
+{% endblock %}
