@@ -35,9 +35,9 @@
               id="wishlistBtn" onclick="toggleWishlist({{ dest.id }}, this)">
         {% if dest.id in wishlist_ids %}❤️ Saved{% else %}🤍 Save to Wishlist{% endif %}
       </button>
-      <button class="btn btn-ghost btn-sm" onclick="addToCompare({{ dest.id }}, this)" style="border-color:rgba(255,255,255,0.4); color:white;">⚖️ Add to Compare</button>
+      <button class="btn btn-ghost btn-sm" onclick="addToCompare({{ dest.id }}, this)" style="border-color:rgba(255,255,255,0.4); color:black;">⚖️ Add to Compare</button>
       {% if dest.google_maps_url and dest.google_maps_url != '#' %}
-      <a href="{{ dest.google_maps_url }}" target="_blank" class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,0.4); color:white;">🗺 View on Maps</a>
+      <a href="{{ dest.google_maps_url }}" target="_blank" class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,0.4); color:black;">🗺 View on Maps</a>
       {% endif %}
     </div>
   </div>
