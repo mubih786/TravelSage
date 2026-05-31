@@ -1,6 +1,6 @@
 # ============================================
 # DATABASE CONNECTION & SETUP
-# Tourist Place Recommendation System
+# Tourist Place Recommendation System (SQLite)
 # ============================================
 
 import sqlite3
@@ -15,8 +15,10 @@ def get_connection():
         print(f"[DB ERROR] {e}")
         return None
 
+
 def get_cursor(conn):
     return conn.cursor()
+
 
 def close_connection(conn, cursor=None):
     try:
@@ -27,195 +29,155 @@ def close_connection(conn, cursor=None):
     except:
         pass
 
+
 # ============================================
 # QUERY FUNCTIONS
 # ============================================
 
 def get_all_destinations():
-    """Fetch all destinations from database."""
     conn = get_connection()
     if not conn:
         return []
     cursor = get_cursor(conn)
     try:
         cursor.execute("SELECT * FROM destinations ORDER BY rating DESC")
-        return cursor.fetchall()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return []
+        return [dict(row) for row in cursor.fetchall()]
     finally:
         close_connection(conn, cursor)
+
 
 def get_destination_by_id(dest_id):
-    """Fetch a single destination by ID."""
     conn = get_connection()
     if not conn:
         return None
     cursor = get_cursor(conn)
     try:
-        cursor.execute("SELECT * FROM destinations WHERE id = %s", (dest_id,))
-        return cursor.fetchone()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return None
+        cursor.execute(
+            "SELECT * FROM destinations WHERE id = ?",
+            (dest_id,)
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
     finally:
         close_connection(conn, cursor)
+
 
 def get_trending_destinations(limit=6):
-    """Fetch trending destinations for homepage."""
     conn = get_connection()
     if not conn:
         return []
     cursor = get_cursor(conn)
     try:
         cursor.execute(
-            "SELECT * FROM destinations WHERE is_trending = TRUE ORDER BY rating DESC LIMIT %s",
-            (limit,)
+            f"SELECT * FROM destinations WHERE is_trending = 1 ORDER BY rating DESC LIMIT {limit}"
         )
-        return cursor.fetchall()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return []
+        return [dict(row) for row in cursor.fetchall()]
     finally:
         close_connection(conn, cursor)
+
 
 def get_top_rated(limit=6):
-    """Fetch top-rated destinations."""
     conn = get_connection()
     if not conn:
         return []
     cursor = get_cursor(conn)
     try:
         cursor.execute(
-            "SELECT * FROM destinations ORDER BY rating DESC LIMIT %s", (limit,)
+            f"SELECT * FROM destinations ORDER BY rating DESC LIMIT {limit}"
         )
-        return cursor.fetchall()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return []
+        return [dict(row) for row in cursor.fetchall()]
     finally:
         close_connection(conn, cursor)
+
 
 def get_hidden_gems(limit=6):
-    """Fetch hidden gem destinations."""
     conn = get_connection()
     if not conn:
         return []
     cursor = get_cursor(conn)
     try:
         cursor.execute(
-            "SELECT * FROM destinations WHERE is_hidden_gem = TRUE ORDER BY rating DESC LIMIT %s",
-            (limit,)
+            f"SELECT * FROM destinations WHERE is_hidden_gem = 1 ORDER BY rating DESC LIMIT {limit}"
         )
-        return cursor.fetchall()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return []
+        return [dict(row) for row in cursor.fetchall()]
     finally:
         close_connection(conn, cursor)
 
-def get_destinations_by_region(region):
-    """Fetch destinations by region."""
-    conn = get_connection()
-    if not conn:
-        return []
-    cursor = get_cursor(conn)
-    try:
-        cursor.execute(
-            "SELECT * FROM destinations WHERE region = %s ORDER BY rating DESC", (region,)
-        )
-        return cursor.fetchall()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return []
-    finally:
-        close_connection(conn, cursor)
 
 def search_by_name(query):
-    """Search destinations by name (autocomplete)."""
     conn = get_connection()
     if not conn:
         return []
     cursor = get_cursor(conn)
     try:
         cursor.execute(
-            "SELECT id, place_name, state FROM destinations WHERE place_name LIKE %s LIMIT 10",
+            "SELECT id, place_name, state FROM destinations WHERE place_name LIKE ? LIMIT 10",
             (f"%{query}%",)
         )
-        return cursor.fetchall()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return []
+        return [dict(row) for row in cursor.fetchall()]
     finally:
         close_connection(conn, cursor)
 
+
 def increment_view_count(dest_id):
-    """Increment view count when a destination detail page is visited."""
     conn = get_connection()
     if not conn:
         return
     cursor = get_cursor(conn)
     try:
         cursor.execute(
-            "UPDATE destinations SET view_count = view_count + 1 WHERE id = %s", (dest_id,)
+            "UPDATE destinations SET view_count = view_count + 1 WHERE id = ?",
+            (dest_id,)
         )
         conn.commit()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
     finally:
         close_connection(conn, cursor)
 
+
 # ============================================
-# WISHLIST FUNCTIONS
+# WISHLIST
 # ============================================
 
 def add_to_wishlist(session_id, dest_id):
-    """Add destination to wishlist."""
     conn = get_connection()
     if not conn:
         return False
     cursor = get_cursor(conn)
     try:
-        # Check if already exists
         cursor.execute(
-            "SELECT id FROM wishlist WHERE session_id=%s AND destination_id=%s",
+            "SELECT id FROM wishlist WHERE session_id=? AND destination_id=?",
             (session_id, dest_id)
         )
         if cursor.fetchone():
             return 'exists'
+
         cursor.execute(
-            "INSERT INTO wishlist (session_id, destination_id) VALUES (%s, %s)",
+            "INSERT INTO wishlist (session_id, destination_id) VALUES (?, ?)",
             (session_id, dest_id)
         )
         conn.commit()
         return True
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return False
     finally:
         close_connection(conn, cursor)
 
+
 def remove_from_wishlist(session_id, dest_id):
-    """Remove destination from wishlist."""
     conn = get_connection()
     if not conn:
         return False
     cursor = get_cursor(conn)
     try:
         cursor.execute(
-            "DELETE FROM wishlist WHERE session_id=%s AND destination_id=%s",
+            "DELETE FROM wishlist WHERE session_id=? AND destination_id=?",
             (session_id, dest_id)
         )
         conn.commit()
         return True
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return False
     finally:
         close_connection(conn, cursor)
 
+
 def get_wishlist(session_id):
-    """Get all wishlist items for a session."""
     conn = get_connection()
     if not conn:
         return []
@@ -225,33 +187,35 @@ def get_wishlist(session_id):
             SELECT d.*, w.saved_at
             FROM destinations d
             JOIN wishlist w ON d.id = w.destination_id
-            WHERE w.session_id = %s
+            WHERE w.session_id = ?
             ORDER BY w.saved_at DESC
         """, (session_id,))
-        return cursor.fetchall()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return []
+        return [dict(row) for row in cursor.fetchall()]
     finally:
         close_connection(conn, cursor)
 
+
 # ============================================
-# SEARCH HISTORY FUNCTIONS
+# SEARCH HISTORY
 # ============================================
 
 def save_search_history(session_id, user_input, results_count):
-    """Save user search to history."""
     conn = get_connection()
     if not conn:
         return
     cursor = get_cursor(conn)
+
+    interests_str = ','.join(
+        user_input.get('interests', [])
+    ) if user_input.get('interests') else None
+
     try:
-        interests_str = ','.join(user_input.get('interests', [])) if user_input.get('interests') else None
         cursor.execute("""
             INSERT INTO search_history
-            (session_id, budget, season, interests, region, travel_type,
-             activity_level, trip_purpose, duration, crowd, age_group, results_count)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            (session_id, budget, season, interests, region,
+             travel_type, activity_level, trip_purpose,
+             duration, crowd, age_group, results_count)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             session_id,
             user_input.get('budget'),
@@ -267,132 +231,134 @@ def save_search_history(session_id, user_input, results_count):
             results_count
         ))
         conn.commit()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
     finally:
         close_connection(conn, cursor)
 
+
 def get_search_history(session_id, limit=10):
-    """Get user search history."""
     conn = get_connection()
     if not conn:
         return []
     cursor = get_cursor(conn)
     try:
         cursor.execute(
-            "SELECT * FROM search_history WHERE session_id=%s ORDER BY searched_at DESC LIMIT %s",
-            (session_id, limit)
+            f"SELECT * FROM search_history WHERE session_id=? ORDER BY searched_at DESC LIMIT {limit}",
+            (session_id,)
         )
-        return cursor.fetchall()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return []
+        return [dict(row) for row in cursor.fetchall()]
     finally:
         close_connection(conn, cursor)
 
+
 # ============================================
-# REVIEW FUNCTIONS
+# REVIEWS
 # ============================================
 
 def add_review(dest_id, session_id, reviewer_name, rating, comment):
-    """Add a user review."""
     conn = get_connection()
     if not conn:
         return False
     cursor = get_cursor(conn)
     try:
         cursor.execute("""
-            INSERT INTO reviews (destination_id, session_id, reviewer_name, rating, comment)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (dest_id, session_id, reviewer_name, rating, comment))
-        # Update average rating
+            INSERT INTO reviews
+            (destination_id, session_id, reviewer_name, rating, comment)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            dest_id, session_id, reviewer_name, rating, comment
+        ))
+
         cursor.execute("""
-            UPDATE destinations SET rating = (
-                SELECT AVG(rating) FROM reviews WHERE destination_id = %s
-            ) WHERE id = %s
+            UPDATE destinations
+            SET rating = (
+                SELECT AVG(rating)
+                FROM reviews
+                WHERE destination_id = ?
+            )
+            WHERE id = ?
         """, (dest_id, dest_id))
+
         conn.commit()
         return True
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return False
     finally:
         close_connection(conn, cursor)
 
+
 def get_reviews(dest_id):
-    """Get reviews for a destination."""
     conn = get_connection()
     if not conn:
         return []
     cursor = get_cursor(conn)
     try:
         cursor.execute(
-            "SELECT * FROM reviews WHERE destination_id=%s ORDER BY reviewed_at DESC",
+            "SELECT * FROM reviews WHERE destination_id=? ORDER BY reviewed_at DESC",
             (dest_id,)
         )
-        return cursor.fetchall()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return []
+        return [dict(row) for row in cursor.fetchall()]
     finally:
         close_connection(conn, cursor)
 
+
 # ============================================
-# COMPARE FUNCTIONS
+# COMPARE
 # ============================================
 
 def get_compare_list(session_id):
-    """Get compare list for session."""
     conn = get_connection()
     if not conn:
         return []
     cursor = get_cursor(conn)
     try:
         cursor.execute("""
-            SELECT d.* FROM destinations d
-            JOIN compare_list c ON d.id = c.destination_id
-            WHERE c.session_id = %s
+            SELECT d.*
+            FROM destinations d
+            JOIN compare_list c
+            ON d.id = c.destination_id
+            WHERE c.session_id = ?
         """, (session_id,))
-        return cursor.fetchall()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return []
+        return [dict(row) for row in cursor.fetchall()]
     finally:
         close_connection(conn, cursor)
 
+
 def add_to_compare(session_id, dest_id):
-    """Add to compare list (max 3)."""
     conn = get_connection()
     if not conn:
         return False
     cursor = get_cursor(conn)
+
     try:
-        cursor.execute("SELECT COUNT(*) as cnt FROM compare_list WHERE session_id=%s", (session_id,))
-        count = cursor.fetchone()['cnt']
+        cursor.execute(
+            "SELECT COUNT(*) FROM compare_list WHERE session_id=?",
+            (session_id,)
+        )
+        count = cursor.fetchone()[0]
+
         if count >= 3:
             return 'full'
+
         cursor.execute(
-            "INSERT IGNORE INTO compare_list (session_id, destination_id) VALUES (%s, %s)",
+            "INSERT OR IGNORE INTO compare_list (session_id, destination_id) VALUES (?, ?)",
             (session_id, dest_id)
         )
+
         conn.commit()
         return True
-    except Error as e:
-        print(f"[DB ERROR] {e}")
-        return False
     finally:
         close_connection(conn, cursor)
 
+
 def clear_compare(session_id):
-    """Clear compare list."""
     conn = get_connection()
     if not conn:
         return
     cursor = get_cursor(conn)
+
     try:
-        cursor.execute("DELETE FROM compare_list WHERE session_id=%s", (session_id,))
+        cursor.execute(
+            "DELETE FROM compare_list WHERE session_id=?",
+            (session_id,)
+        )
         conn.commit()
-    except Error as e:
-        print(f"[DB ERROR] {e}")
     finally:
         close_connection(conn, cursor)
