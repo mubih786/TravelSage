@@ -6,6 +6,10 @@
 {% macro dest_card(dest, wishlist_ids) %}
 <div class="dest-card fade-in">
   <div class="card-img">
+    <img src="{{ dest.image_url }}"
+       alt="{{ dest.place_name }}"
+       class="card-image">
+       
     <div class="card-img-placeholder">
       {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿','Snow':'❄️'} %}
       {% set first_tag = dest.tags.split(',')[0].strip() %}
