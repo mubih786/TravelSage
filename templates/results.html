@@ -58,6 +58,9 @@
     {% for dest in results %}
     <div class="dest-card fade-in" style="animation-delay: {{ loop.index0 * 0.05 }}s">
       <div class="card-img">
+        <img src="{{ dest.image_url }}"
+       alt="{{ dest.place_name }}"
+       class="card-image">
         <div class="card-img-placeholder">
           {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿','Snow':'❄️','Mountains':'🏔','Tea Gardens':'☕','Backwaters':'🚣','Lakes':'🏞','Waterfalls':'🌊','Coffee':'☕','Tribal Culture':'🎭','Buddhist':'🧘','French Culture':'🥐'} %}
           {% set first_tag = dest.tags.split(',')[0].strip() %}
@@ -137,6 +140,9 @@
         {% for dest in suggestions %}
         <div class="dest-card">
           <div class="card-img">
+            <img src="{{ dest.image_url }}"
+       alt="{{ dest.place_name }}"
+       class="card-image">
             <div class="card-img-placeholder">📍</div>
             <div class="card-match">{{ dest.match_score }}%</div>
           </div>

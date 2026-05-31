@@ -17,6 +17,9 @@
     {% for dest in items %}
     <div class="dest-card fade-in" id="wish-{{ dest.id }}">
       <div class="card-img">
+        <img src="{{ dest.image_url }}"
+     alt="{{ dest.place_name }}"
+     class="card-image">
         <div class="card-img-placeholder">
           {% set icons = {'Beaches':'🏖','Hills':'⛰','Historical':'🏛','Wildlife':'🐘','Desert':'🏜','Islands':'🏝','Spiritual':'🛕','Adventure':'🧗','Nature':'🌿'} %}
           {{ icons.get(dest.tags.split(',')[0].strip(), '📍') }}
